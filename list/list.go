@@ -9,21 +9,28 @@ type Node[T any] struct {
 // Iterator est un itérateur pour List.
 type Iterator[T any] struct {
 	current *Node[T]
+	size    int
 	list    *List[T]
 }
 
 type List[T any] struct {
-	head *Node[T]
-	tail *Node[T]
-	size int
+	head   *Node[T]
+	tail   *Node[T]
+	size   int
+	equals func(a, b T) bool
 }
 
 // New creates a new empty list.
 func New[T any](values ...T) *List[T] {
 	list := &List[T]{}
 	for _, v := range values {
-		list.PushFront(v)
+		list.PushBack(v)
 	}
+	//log.Println("prev-prev", list.head.Value)
+	//log.Println("prev", list.head.next.Value)
+	//log.Println("actual", list.head.next.next.Value)
+	//log.Println("next", list.tail.next.Value)
+
 	return list
 }
 
@@ -38,6 +45,7 @@ func (l *List[T]) PushFront(value T) {
 		l.head.prev = newNode
 		l.head = newNode
 	}
+
 	l.size++
 }
 
@@ -51,7 +59,9 @@ func (l *List[T]) PushBack(value T) {
 		newNode.prev = l.tail
 		l.tail.next = newNode
 		l.tail = newNode
+		//log.Println(l.tail.next, "newNode", newNode)
 	}
+
 	l.size++
 }
 
@@ -195,7 +205,7 @@ func (l *List[T]) InsertRange(it *Iterator[T], y *List[T]) {
 }
 
 func (l *List[T]) PrependRange(y *List[T]) {
-	l.InsertRange(&Iterator[T]{current: l.head, list: l}, y)
+	l.InsertRange(&Iterator[T]{current: l.head, size: l.size}, y)
 }
 
 func (l *List[T]) Resize(newSize int, zeroValue T) {
@@ -223,7 +233,7 @@ func (l *List[T]) Unique(equal func(a, b T) bool) {
 	}
 	for next := it.current.next; next != nil; next = it.current.next {
 		if equal(it.Value(), next.Value) {
-			l.Erase(&Iterator[T]{current: next, list: l})
+			l.Erase(&Iterator[T]{current: next, size: l.Size()})
 		} else {
 			it.current = next
 		}
@@ -238,7 +248,7 @@ func (l *List[T]) Swap(y *List[T]) {
 
 func (l *List[T]) Remove(value T) {
 	for it := l.Begin(); it.current != nil; {
-		if it.Value() == value {
+		if l.equals(it.Value(), value) {
 			next := it.current.next
 			l.Erase(it)
 			it.current = next
@@ -267,7 +277,7 @@ func (l *List[T]) Sort(compare func(a, b T) bool) {
 	// Simple insertion sort, replace with more efficient sort for large lists
 	for it1 := l.Begin(); it1.Next(); {
 		val := it1.Value()
-		it2 := &Iterator[T]{current: it1.current.prev, list: l}
+		it2 := &Iterator[T]{current: it1.current.prev, size: l.Size()}
 		for ; it2.current != nil && compare(val, it2.Value()); it2.current = it2.current.prev {
 		}
 		if it1.current != it2.current.next {
@@ -279,12 +289,16 @@ func (l *List[T]) Sort(compare func(a, b T) bool) {
 
 // Begin retourne un itérateur pointant sur le premier élément de la liste.
 func (l *List[T]) Begin() *Iterator[T] {
-	return &Iterator[T]{current: l.head, list: l}
+	return &Iterator[T]{current: l.head, size: l.Size()}
 }
 
 // End retourne un itérateur pointant sur l'élément après le dernier élément de la liste.
 func (l *List[T]) End() *Iterator[T] {
-	return &Iterator[T]{current: nil, list: l}
+	return &Iterator[T]{current: nil, size: l.Size()}
+}
+
+func (l *List[T]) Iterator() *Iterator[T] {
+	return &Iterator[T]{current: l.head, size: l.Size(), list: l}
 }
 
 // Next avance l'itérateur et retourne true s'il y a un élément suivant.
@@ -292,17 +306,28 @@ func (it *Iterator[T]) Next() bool {
 	if it.current == nil {
 		return false
 	}
-	it.current = it.current.next
-	return it.current != nil
+
+	if it.size > 1 {
+		it.current = it.current.next
+	}
+
+	it.size--
+
+	return it.size >= 0
 }
 
 // Value retourne la valeur courante de l'itérateur.
 func (it *Iterator[T]) Value() T {
-	if it.current == nil {
+	if it.size < 0 {
 		var zeroValue T
 		return zeroValue
 	}
-	return it.current.Value
+
+	if it.size == 0 {
+		return it.current.Value
+	}
+
+	return it.current.prev.Value
 }
 
 func (l *List[T]) Splice(pos *Iterator[T], y *List[T], iterators ...*Iterator[T]) {
