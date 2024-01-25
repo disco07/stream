@@ -1,17 +1,17 @@
 package list
 
-// Iterator est un itérateur pour List.
 type Iterator[T any] struct {
 	current *Node[T]
 	size    int
 	list    *List[T]
 }
 
+// Iterator returns an iterator for the list.
 func (l *List[T]) Iterator() *Iterator[T] {
 	return &Iterator[T]{current: l.head, size: l.Size(), list: l}
 }
 
-// Next avance l'itérateur et retourne true s'il y a un élément suivant.
+// Next returns true if there is a next value.
 func (it *Iterator[T]) Next() bool {
 	if it.current == nil {
 		return false
@@ -26,7 +26,7 @@ func (it *Iterator[T]) Next() bool {
 	return it.size >= 0
 }
 
-// Value retourne la valeur courante de l'itérateur.
+// Value returns the current value.
 func (it *Iterator[T]) Value() T {
 	if it.size < 0 {
 		var zeroValue T
@@ -40,7 +40,7 @@ func (it *Iterator[T]) Value() T {
 	return it.current.prev.Value
 }
 
-// SetValue modifie la valeur courante de l'itérateur.
+// SetValue sets the current value.
 func (it *Iterator[T]) SetValue(value T) {
 	if it.size < 0 {
 		return
@@ -54,7 +54,7 @@ func (it *Iterator[T]) SetValue(value T) {
 	it.current.prev.Value = value
 }
 
-// Remove supprime l'élément courant de la liste.
+// Remove removes the current value.
 func (it *Iterator[T]) Remove() {
 	if it.size < 0 {
 		return

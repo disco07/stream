@@ -1,3 +1,13 @@
+// Package list implements a generic doubly linked list.
+//
+// This package requires Go 1.18 or later, as it makes use of generics introduced in Go 1.18.
+// The List package provides a variety of methods to perform operations such as
+// insertion, deletion, and traversal on a doubly linked list. This implementation
+// allows for efficient insertion and removal from both the front and back of the list.
+// The package includes an iterator to facilitate list traversal.
+//
+// Typical use cases of the List package include implementing queues, stacks, and other
+// data structures that benefit from quick insertions and deletions at both ends.
 package list
 
 type Node[T any] struct {
@@ -14,6 +24,7 @@ type List[T any] struct {
 	size int
 }
 
+// New create a new list with the given values.
 func New[T any](values ...T) *List[T] {
 	list := &List[T]{}
 	for _, v := range values {
@@ -23,7 +34,7 @@ func New[T any](values ...T) *List[T] {
 	return list
 }
 
-// PushBack ajoute un élément à la fin de la liste.
+// PushBack adds a value to the end of the list.
 func (l *List[T]) PushBack(value T) {
 	newNode := &Node[T]{Value: value}
 	if l.tail == nil {
@@ -38,7 +49,7 @@ func (l *List[T]) PushBack(value T) {
 	l.size++
 }
 
-// PopFront supprime et renvoie l'élément du début de la liste.
+// PopFront removes the first value of the list.
 func (l *List[T]) PopFront() (T, bool) {
 	if l.head == nil {
 		var zeroValue T
@@ -55,7 +66,7 @@ func (l *List[T]) PopFront() (T, bool) {
 	return value, true
 }
 
-// PopBack supprime et renvoie l'élément de fin de la liste.
+// PopBack removes the last value of the list.
 func (l *List[T]) PopBack() (T, bool) {
 	if l.tail == nil {
 		var zeroValue T
@@ -72,23 +83,24 @@ func (l *List[T]) PopBack() (T, bool) {
 	return value, true
 }
 
-// Size retourne le nombre d'éléments dans la liste.
+// Size returns the number of elements in the list.
 func (l *List[T]) Size() int {
 	return l.size
 }
 
-// Empty vérifie si la liste est vide.
+// Empty returns true if the list is empty.
 func (l *List[T]) Empty() bool {
 	return l.size == 0
 }
 
-// Clear efface tous les éléments de la liste.
+// Clear removes all elements from the list.
 func (l *List[T]) Clear() {
 	l.head = nil
 	l.tail = nil
 	l.size = 0
 }
 
+// Front returns the first element of the list.
 func (l *List[T]) Front() (T, bool) {
 	if l.head == nil {
 		var zeroValue T
@@ -98,6 +110,7 @@ func (l *List[T]) Front() (T, bool) {
 	return l.head.Value, true
 }
 
+// Back returns the last element of the list.
 func (l *List[T]) Back() (T, bool) {
 	if l.tail == nil {
 		var zeroValue T
@@ -107,6 +120,7 @@ func (l *List[T]) Back() (T, bool) {
 	return l.tail.Value, true
 }
 
+// Insert inserts a value at the given index.
 func (l *List[T]) Insert(it *Iterator[T], value T) {
 	newNode := &Node[T]{Value: value}
 	if it.current != nil {
@@ -124,6 +138,7 @@ func (l *List[T]) Insert(it *Iterator[T], value T) {
 	l.size++
 }
 
+// Erase removes the element at the given index.
 func (l *List[T]) Erase(it *Iterator[T]) {
 	if it.current == nil {
 		return
@@ -141,6 +156,7 @@ func (l *List[T]) Erase(it *Iterator[T]) {
 	l.size--
 }
 
+// Reverse reverses the list.
 func (l *List[T]) Reverse() {
 	var prev, next *Node[T]
 	current := l.head
@@ -155,6 +171,7 @@ func (l *List[T]) Reverse() {
 	l.head = prev
 }
 
+// InsertRange inserts a list at the given index.
 func (l *List[T]) InsertRange(it *Iterator[T], y *List[T]) {
 	if y.head == nil {
 		return
@@ -179,10 +196,12 @@ func (l *List[T]) InsertRange(it *Iterator[T], y *List[T]) {
 	y.head, y.tail, y.size = nil, nil, 0
 }
 
+// PrependRange prepends a list to the list.
 func (l *List[T]) PrependRange(y *List[T]) {
 	l.InsertRange(&Iterator[T]{current: l.head, size: l.size}, y)
 }
 
+// Resize resizes the list to the given size.
 func (l *List[T]) Resize(newSize int, zeroValue T) {
 	for l.size < newSize {
 		l.PushBack(zeroValue)
@@ -192,6 +211,7 @@ func (l *List[T]) Resize(newSize int, zeroValue T) {
 	}
 }
 
+// Merge merges two lists together.
 func (l *List[T]) Merge(y *List[T], compare func(a, b T) bool) {
 	it := l.Begin()
 	for itY := y.Begin(); itY.current != nil; y.Erase(itY) {
@@ -201,6 +221,7 @@ func (l *List[T]) Merge(y *List[T], compare func(a, b T) bool) {
 	}
 }
 
+// Unique removes all duplicate elements from the list.
 func (l *List[T]) Unique(equal func(a, b T) bool) {
 	it := l.Begin()
 	if it.current == nil {
@@ -215,12 +236,14 @@ func (l *List[T]) Unique(equal func(a, b T) bool) {
 	}
 }
 
+// Swap swaps the contents of two lists.
 func (l *List[T]) Swap(y *List[T]) {
 	l.head, y.head = y.head, l.head
 	l.tail, y.tail = y.tail, l.tail
 	l.size, y.size = y.size, l.size
 }
 
+// RemoveIf removes all elements that satisfy the given predicate.
 func (l *List[T]) RemoveIf(predicate func(T) bool) {
 	for it := l.Begin(); it.current != nil; {
 		if predicate(it.Value()) {
@@ -233,11 +256,12 @@ func (l *List[T]) RemoveIf(predicate func(T) bool) {
 	}
 }
 
+// Sort sorts the list using the given comparator.
 func (l *List[T]) Sort(compare func(a, b T) bool) {
 	if l.size < 2 {
 		return
 	}
-	// Simple insertion sort, replace with more efficient sort for large lists
+
 	for it1 := l.Begin(); it1.Next(); {
 		val := it1.Value()
 		it2 := &Iterator[T]{current: it1.current.prev, size: l.Size()}
@@ -250,16 +274,17 @@ func (l *List[T]) Sort(compare func(a, b T) bool) {
 	}
 }
 
-// Begin retourne un itérateur pointant sur le premier élément de la liste.
+// Begin returns an iterator to the first element of the list.
 func (l *List[T]) Begin() *Iterator[T] {
 	return &Iterator[T]{current: l.head, size: l.Size()}
 }
 
-// End retourne un itérateur pointant sur l'élément après le dernier élément de la liste.
+// End returns an iterator to the last element of the list.
 func (l *List[T]) End() *Iterator[T] {
 	return &Iterator[T]{current: nil, size: l.Size()}
 }
 
+// Splice removes the elements in the range [first, last) from y and inserts them into the list at pos.
 func (l *List[T]) Splice(pos *Iterator[T], y *List[T], iterators ...*Iterator[T]) {
 	if y.Empty() {
 		return
@@ -276,7 +301,6 @@ func (l *List[T]) Splice(pos *Iterator[T], y *List[T], iterators ...*Iterator[T]
 		firstNode, lastNode = iterators[0].current, iterators[1].current.prev
 	}
 
-	// Détacher la plage de nœuds de y.
 	if firstNode.prev != nil {
 		firstNode.prev.next = lastNode.next
 	} else {
@@ -288,7 +312,6 @@ func (l *List[T]) Splice(pos *Iterator[T], y *List[T], iterators ...*Iterator[T]
 		y.tail = firstNode.prev
 	}
 
-	// Attacher la plage de nœuds à la liste l à la position pos.
 	if pos.current != nil {
 		if pos.current.prev != nil {
 			pos.current.prev.next = firstNode
@@ -309,7 +332,6 @@ func (l *List[T]) Splice(pos *Iterator[T], y *List[T], iterators ...*Iterator[T]
 		}
 	}
 
-	// Ajuster la taille des listes.
 	count := 0
 	for node := firstNode; node != lastNode.next; node = node.next {
 		count++
