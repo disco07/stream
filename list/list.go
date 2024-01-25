@@ -2,51 +2,25 @@ package list
 
 type Node[T any] struct {
 	Value T
-	prev  *Node[T]
-	next  *Node[T]
-}
-
-// Iterator est un itérateur pour List.
-type Iterator[T any] struct {
-	current *Node[T]
-	size    int
-	list    *List[T]
+	// Remarque : Les champs prev et next restent des pointeurs car ils sont essentiels
+	// pour la structure de la liste doublement chaînée.
+	prev *Node[T]
+	next *Node[T]
 }
 
 type List[T any] struct {
-	head   *Node[T]
-	tail   *Node[T]
-	size   int
-	equals func(a, b T) bool
+	head *Node[T]
+	tail *Node[T]
+	size int
 }
 
-// New creates a new empty list.
 func New[T any](values ...T) *List[T] {
 	list := &List[T]{}
 	for _, v := range values {
 		list.PushBack(v)
 	}
-	//log.Println("prev-prev", list.head.Value)
-	//log.Println("prev", list.head.next.Value)
-	//log.Println("actual", list.head.next.next.Value)
-	//log.Println("next", list.tail.next.Value)
 
 	return list
-}
-
-// PushFront ajoute un élément au début de la liste.
-func (l *List[T]) PushFront(value T) {
-	newNode := &Node[T]{Value: value}
-	if l.head == nil {
-		l.head = newNode
-		l.tail = newNode
-	} else {
-		newNode.next = l.head
-		l.head.prev = newNode
-		l.head = newNode
-	}
-
-	l.size++
 }
 
 // PushBack ajoute un élément à la fin de la liste.
@@ -59,7 +33,6 @@ func (l *List[T]) PushBack(value T) {
 		newNode.prev = l.tail
 		l.tail.next = newNode
 		l.tail = newNode
-		//log.Println(l.tail.next, "newNode", newNode)
 	}
 
 	l.size++
@@ -121,6 +94,7 @@ func (l *List[T]) Front() (T, bool) {
 		var zeroValue T
 		return zeroValue, false
 	}
+
 	return l.head.Value, true
 }
 
@@ -129,6 +103,7 @@ func (l *List[T]) Back() (T, bool) {
 		var zeroValue T
 		return zeroValue, false
 	}
+
 	return l.tail.Value, true
 }
 
@@ -246,18 +221,6 @@ func (l *List[T]) Swap(y *List[T]) {
 	l.size, y.size = y.size, l.size
 }
 
-func (l *List[T]) Remove(value T) {
-	for it := l.Begin(); it.current != nil; {
-		if l.equals(it.Value(), value) {
-			next := it.current.next
-			l.Erase(it)
-			it.current = next
-		} else {
-			it.Next()
-		}
-	}
-}
-
 func (l *List[T]) RemoveIf(predicate func(T) bool) {
 	for it := l.Begin(); it.current != nil; {
 		if predicate(it.Value()) {
@@ -295,39 +258,6 @@ func (l *List[T]) Begin() *Iterator[T] {
 // End retourne un itérateur pointant sur l'élément après le dernier élément de la liste.
 func (l *List[T]) End() *Iterator[T] {
 	return &Iterator[T]{current: nil, size: l.Size()}
-}
-
-func (l *List[T]) Iterator() *Iterator[T] {
-	return &Iterator[T]{current: l.head, size: l.Size(), list: l}
-}
-
-// Next avance l'itérateur et retourne true s'il y a un élément suivant.
-func (it *Iterator[T]) Next() bool {
-	if it.current == nil {
-		return false
-	}
-
-	if it.size > 1 {
-		it.current = it.current.next
-	}
-
-	it.size--
-
-	return it.size >= 0
-}
-
-// Value retourne la valeur courante de l'itérateur.
-func (it *Iterator[T]) Value() T {
-	if it.size < 0 {
-		var zeroValue T
-		return zeroValue
-	}
-
-	if it.size == 0 {
-		return it.current.Value
-	}
-
-	return it.current.prev.Value
 }
 
 func (l *List[T]) Splice(pos *Iterator[T], y *List[T], iterators ...*Iterator[T]) {

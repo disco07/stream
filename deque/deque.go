@@ -1,30 +1,15 @@
 package deque
 
 type Deque[T any] struct {
-	// data est la slice interne qui stocke les éléments du Deque.
-	// Son type est générique, permettant au Deque de stocker des éléments de n'importe quel type spécifié.
-	data []T
-
-	// head est l'indice de l'élément en début du Deque.
-	// Il pointe vers l'emplacement du prochain élément à supprimer lors d'un PopFront,
-	// ou vers l'endroit où insérer un nouvel élément lors d'un PushFront.
-	head int
-
-	// tail est l'indice juste après le dernier élément du Deque.
-	// Il pointe vers l'emplacement où un nouvel élément doit être ajouté lors d'un PushBack.
-	// Notez que tail est l'indice du premier emplacement vide après la fin actuelle du Deque.
-	tail int
-
-	// size représente le nombre d'éléments actuellement stockés dans le Deque.
-	// C'est la différence entre les indices tail et head, ajustée pour les débordements.
-	size int
-
-	// hasHead est un booléen qui indique si le Deque a un élément en début.
+	data    []T
+	head    int
+	tail    int
+	size    int
 	hasHead bool
 }
 
-// NewDeque creates a new deque with the given items.
-func NewDeque[T any](items ...T) *Deque[T] {
+// New creates a new deque with the given items.
+func New[T any](items ...T) *Deque[T] {
 	capacity := len(items) * 2
 	if capacity < 4 {
 		capacity = 4
@@ -237,6 +222,14 @@ func (d *Deque[T]) Swap(i, j int) {
 	d.data[(d.head+i)%len(d.data)], d.data[(d.head+j)%len(d.data)] = d.data[(d.head+j)%len(d.data)], d.data[(d.head+i)%len(d.data)]
 }
 
+func (d *Deque[T]) EraseIf(predicate func(T) bool) {
+	for it := d.Iterator(); it.Next(); {
+		if predicate(it.Value()) {
+			it.Remove()
+		}
+	}
+}
+
 func Contains[T comparable](d *Deque[T], item T) bool {
 	for it := d.Iterator(); it.Next(); {
 		if it.Value() == item {
@@ -257,25 +250,6 @@ func (d *Deque[T]) resize() {
 	d.data = newData
 	d.head = 0
 	d.tail = d.size
-}
-
-type Iterator[T any] struct {
-	deque *Deque[T]
-	index int
-	count int
-}
-
-func (it *Iterator[T]) Next() bool {
-	if it.count >= it.deque.size {
-		return false
-	}
-	it.index = (it.deque.head + it.count) % len(it.deque.data)
-	it.count++
-	return true
-}
-
-func (it *Iterator[T]) Value() T {
-	return it.deque.data[it.index]
 }
 
 func (d *Deque[T]) Iterator() *Iterator[T] {
