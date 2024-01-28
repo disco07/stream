@@ -1,20 +1,27 @@
 package unordered_map
 
 type Iterator[K comparable, V any] struct {
-	m     *Map[K, V]
-	index uint64
-	count uint64
+	m       *Map[K, V]
+	index   uint64
+	count   uint64
+	found   bool
+	founded uint64
 }
 
 func (it *Iterator[K, V]) Next() bool {
-	if it.count > it.m.size {
+	if it.found {
 		return false
 	}
 
 	for it.index < it.m.capacity {
-		if it.m.items[it.count].filled {
+		if !it.found && it.m.items[it.count].filled {
 			it.index = it.count
 			it.count++
+			it.founded++
+
+			if it.founded == it.m.size {
+				it.found = true
+			}
 
 			return true
 		}

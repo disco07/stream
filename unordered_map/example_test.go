@@ -4,7 +4,7 @@ import "fmt"
 
 func ExampleNew() {
 	// Create a new unordered_map
-	m := New[int, int](hashInt)
+	m := New[int, int](HashInt)
 
 	// Add items to the unordered_map
 	m.Set(1, 2)

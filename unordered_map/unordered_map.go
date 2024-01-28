@@ -45,8 +45,7 @@
 package unordered_map
 
 import (
-	"fmt"
-	"hash/fnv"
+	"github.com/segmentio/fasthash/fnv1a"
 	"math/rand"
 )
 
@@ -178,13 +177,53 @@ func (m *Map[K, V]) resize() {
 	m.capacity = newCapacity
 }
 
-func hashInt(a int) uint64 {
-	return uint64(a)
+func HashUint64(u uint64) uint64 {
+	return hash(u)
+}
+func HashUint32(u uint32) uint64 {
+	return hash(uint64(u))
+}
+func HashUint16(u uint16) uint64 {
+	return hash(uint64(u))
+}
+func HashUint8(u uint8) uint64 {
+	return hash(uint64(u))
+}
+func HashInt64(i int64) uint64 {
+	return hash(uint64(i))
+}
+func HashInt32(i int32) uint64 {
+	return hash(uint64(i))
+}
+func HashInt16(i int16) uint64 {
+	return hash(uint64(i))
+}
+func HashInt8(i int8) uint64 {
+	return hash(uint64(i))
+}
+func HashInt(i int) uint64 {
+	return hash(uint64(i))
+}
+func HashUint(i uint) uint64 {
+	return hash(uint64(i))
+}
+func HashString(s string) uint64 {
+	return fnv1a.HashString64(s)
+}
+func HashBytes(b []byte) uint64 {
+	return fnv1a.HashBytes64(b)
 }
 
-func hash(key any, cap uint64) uint64 {
-	hasher := fnv.New64a()
-	hasher.Write([]byte(fmt.Sprintf("%v", key)))
+func hash(u uint64) uint64 {
+	u ^= u >> 33
+	u *= 0xff51afd7ed558ccd
+	u ^= u >> 33
+	u *= 0xc4ceb9fe1a85ec53
+	u ^= u >> 33
+	u += u << 3
+	u ^= u >> 7
+	u *= 0x9e3779b97f4a7c15
+	u ^= u >> 33
 
-	return hasher.Sum64() % cap
+	return u
 }
