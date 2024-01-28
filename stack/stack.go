@@ -1,43 +1,62 @@
-// Package stack implements a generic stack.
+// Package stack provides a generic implementation of a stack data structure,
+// supporting LIFO (Last In, First Out) semantics for element access.
 //
-// This package requires Go 1.18 or later due to the use of generics. The Stack package
-// offers a simple yet flexible implementation of a stack data structure, allowing for
-// LIFO (Last In, First Out) operations. This implementation provides methods for
-// pushing to and popping from the stack, as well as viewing the top element and checking
-// if the stack is empty.
+// The Stack[T] structure is the primary type offered by this package, implemented
+// using a slice to store elements. The New function initializes the Stack with an
+// optional set of initial values:
 //
-// The Stack is particularly useful in scenarios where you need to reverse the order of
-// elements, keep track of previous states, or need a simple and efficient way to manage
-// data with LIFO access patterns.
+//	func New[T any](values ...T) *Stack[T] {
+//	    data := make([]T, len(values))
+//	    copy(data, values)
+//	    return &Stack[T]{data: data, size: len(values)}
+//	}
+//
+// Stack supports typical stack operations such as Push, Pop, and Peek, making it
+// suitable for various applications like expression evaluation, backtracking algorithms,
+// and more.
+//
+// Example usage:
+//
+//	st := NewStack[int](1, 2)
+//	st.Push(3)
+//	fmt.Println(st.Pop()) // Outputs "3"
+//
+// This package is well-suited for use cases that require a simple and efficient
+// last-in-first-out data management system.
 package stack
 
 type Stack[T any] struct {
 	data []T
 	size int
+	tail int
+	head int
 }
 
 // New creates a new stack with the given values.
-func New[T any](values ...T) *Stack[T] {
-	data := make([]T, len(values))
-	copy(data, values)
-	return &Stack[T]{data: data, size: len(values)}
+func New[T any](items ...T) *Stack[T] {
+	capacity := len(items) * 2
+	if capacity < 4 {
+		capacity = 4
+	}
+
+	stack := &Stack[T]{
+		data: make([]T, capacity),
+		size: len(items),
+		tail: len(items),
+		head: len(items),
+	}
+
+	copy(stack.data, items)
+	return stack
 }
 
 // Push adds a value to the top of the stack.
-func (s *Stack[T]) Push(value T) {
+func (s *Stack[T]) Push(item T) {
 	if s.size == len(s.data) {
-		// Double la capacité de la slice si nécessaire
-		newCapacity := 2*s.size + 1
-		if newCapacity < 4 {
-			newCapacity = 4
-		}
-
-		newdata := make([]T, s.size, newCapacity)
-		copy(newdata, s.data)
-		s.data = newdata
+		s.resize()
 	}
-	s.data = s.data[:s.size+1]
-	s.data[s.size] = value
+	s.data[s.tail] = item
+	s.tail = s.tail + 1
 	s.size++
 }
 
@@ -74,7 +93,16 @@ func (s *Stack[T]) Empty() bool {
 	return s.size == 0
 }
 
+func (s *Stack[T]) resize() {
+	newData := make([]T, len(s.data)*2)
+
+	copy(newData, s.data[s.head:])
+	s.data = newData
+	s.head = 0
+	s.tail = s.size
+}
+
 // Iterator returns an iterator for the stack.
 func (s *Stack[T]) Iterator() *Iterator[T] {
-	return &Iterator[T]{stack: s, index: -1}
+	return &Iterator[T]{stack: s, index: s.size}
 }

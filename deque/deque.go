@@ -1,17 +1,37 @@
-// Package deque implements a generic deque (double-ended queue) data structure.
-// This implementation allows for efficient addition and removal of elements from both
-// the front and the back of the queue. It is implemented as a dynamically resizing circular buffer,
-// providing amortized constant time complexity for the push and pop operations.
+// Package deque provides a generic implementation of a double-ended queue (deque),
+// allowing for efficient insertion and removal of elements at both ends.
 //
-// The Deque is generic and can hold elements of any type, thanks to Go's type parameter feature introduced in Go 1.18.
-// This feature makes the Deque flexible and versatile for various use cases.
+// The Deque[T] structure, central to this package, is implemented using a dynamic array
+// to efficiently manage memory and optimize access times. The New function initializes
+// the Deque with an optional set of initial items:
 //
-// Key operations include PushFront and PushBack for adding elements, PopFront and PopBack for removing elements,
-// and an At method for indexed access to elements. Additionally, the package provides a Sort function
-// to sort the Deque in place using the QuickSort algorithm.
+//	func New[T any](items ...T) *Deque[T] {
+//	    capacity := len(items) * 2
+//	    if capacity < 4 {
+//	        capacity = 4
+//	    }
+//	    dq := &Deque[T]{
+//	        data: make([]T, capacity),
+//	        head: 0,
+//	        tail: len(items),
+//	        size: len(items),
+//	    }
+//	    copy(dq.data, items)
+//	    return dq
+//	}
 //
-// The Deque is particularly useful in scenarios where both ends of the queue need to be accessed or modified,
-// such as in certain algorithms or data processing tasks.
+// The Deque supports operations like PushFront, PushBack, PopFront, and PopBack,
+// providing the flexibility to use it as a queue, a stack, or a hybrid structure.
+//
+// Example usage:
+//
+//	dq := NewDeque[string]("a", "b", "c")
+//	dq.PushBack("d")
+//	dq.PushFront("e")
+//	fmt.Println(dq.PopFront()) // Outputs "e"
+//
+// This package is ideal for scenarios requiring dynamic and flexible queue-like
+// structures with efficient operations at both ends.
 package deque
 
 import (
@@ -35,12 +55,14 @@ func New[T any](items ...T) *Deque[T] {
 	if capacity < 4 {
 		capacity = 4
 	}
+
 	dq := &Deque[T]{
 		data: make([]T, capacity),
 		head: 0,
 		tail: len(items),
 		size: len(items),
 	}
+
 	copy(dq.data, items)
 	return dq
 }
