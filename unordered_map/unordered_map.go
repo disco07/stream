@@ -1,47 +1,50 @@
-// Package unordered_map provides a generic implementation of a hashmap, similar to
-// std::unordered_map in C++. It's designed to offer a flexible and efficient
-// way to manage key-value pairs with customizable hashing and equality operations.
+// Package unordered_map implements a generic hash map data structure in Go, inspired by
+// the C++ standard library's unordered_map. This Go implementation provides efficient
+// key-value storage with fast lookup, addition, and deletion operations, optimized for
+// performance through hash-based storage without maintaining element order.
 //
-// The Map structure at the core of this package handles key-value pairs using
-// an array-based approach. The New function initializes the Map:
+// Drawing from the design principles of C++'s unordered_map, this package offers a
+// Map type supporting generic key-value pairs. Keys must be of a comparable type, while
+// values can be of any type, utilizing Go's type parameters for flexibility across
+// various applications.
 //
-//	func New[K, V any](HashOps HashOps[K]) *Map[K, V] {
-//	    return &Map[K, V]{
-//	        items:    make([]keyValue[K, V], initialCapacity),
-//	        capacity: initialCapacity,
-//	        hashOps:  HashOps,
-//	    }
+// Internally, the Map is realized as an array of keyValue structures, each encapsulating
+// a key, value, and a boolean occupancy flag. This approach efficiently addresses hash
+// collisions and conserves memory.
+//
+// Key Features:
+//   - Customizable Hash Function: Users can specify their own hash function for key hashing,
+//     accommodating diverse hashing needs and strategies.
+//   - Dynamic Resizing: To ensure operational efficiency, the map's capacity dynamically
+//     adjusts in response to changes in the number of stored elements.
+//   - Generics: The use of generics enables the Map to handle any comparable key and arbitrary
+//     value types, enhancing its utility in a wide array of use cases.
+//
+// Example Usage:
+//
+//	// A simple string hash function example.
+//	hashFn := HashString
+//
+//	// Instantiate a Map with the custom hash function.
+//	m := unordered_map.New[string, int](hashFn)
+//
+//	// Insert key-value pairs.
+//	m.Set("apple", 5)
+//	m.Set("banana", 10)
+//	m.Set("cherry", 15)
+//
+//	// Retrieve the value for a key.
+//	if value, ok := m.Get("banana"); ok {
+//	    fmt.Println("Value:", value) // Expected Output: Value: 10
 //	}
 //
-// The HashOps parameter requires the user to provide hash and equality functions,
-// enabling the use of the Map with any types for keys and values. This package
-// is optimized for performance, with a focus on efficient memory usage. The map
-// supports operations like Set, Get, and resizing, maintaining good performance
-// characteristics even as it grows.
+// This illustrative example demonstrates initializing a new unordered map with string keys
+// and integer values, employing a custom hash function. It includes examples of adding
+// key-value pairs to the map and retrieving a specific value.
 //
-// Usage example:
-//
-//	func equalsInt(a, b int) bool {
-//	    return a == b
-//	}
-//
-//	func hashInt(a int) uint64 {
-//	    return uint64(a)
-//	}
-//
-//	func main() {
-//	    hashOps := HashOps[int]{equals: equalsInt, hash: hashInt}
-//	    m := NewMap[int, string](hashOps)
-//	    m.Set(1, "one")
-//	    m.Set(2, "two")
-//
-//	    if value, ok := m.Get(1); ok {
-//	        fmt.Println("Value:", value)
-//	    }
-//	}
-//
-// unordered_map is ideal for applications requiring a hashmap with customized
-// hashing and equality checks, and where performance and efficient memory usage are critical.
+// The design and functionality of this unordered_map package pay homage to the
+// flexibility and efficiency of its C++ counterpart, adapted to Go's language
+// idioms and type system.
 package unordered_map
 
 import (
@@ -62,16 +65,13 @@ type Map[K comparable, V any] struct {
 
 	capacity uint64
 	size     uint64
-	readonly bool
 
 	hashFn func(K) uint64
 }
 
-type HashOps[T any] struct {
-	equals func(a, b T) bool
-}
+type HashFn[K comparable] func(K) uint64
 
-func New[K comparable, V any](hashFn func(K) uint64) *Map[K, V] {
+func New[K comparable, V any](hashFn HashFn[K]) *Map[K, V] {
 	return &Map[K, V]{
 		items:    make([]keyValue[K, V], initialCapacity),
 		capacity: initialCapacity,
@@ -80,10 +80,6 @@ func New[K comparable, V any](hashFn func(K) uint64) *Map[K, V] {
 }
 
 func (m *Map[K, V]) Set(key K, value V) {
-	if m.readonly {
-		panic("cannot modify readonly map")
-	}
-
 	if float64(m.size)/float64(m.capacity) > 0.75 {
 		m.resize()
 	}
@@ -125,10 +121,6 @@ func (m *Map[K, V]) Get(key K) (V, bool) {
 }
 
 func (m *Map[K, V]) Delete(key K) {
-	if m.readonly {
-		panic("cannot modify readonly map")
-	}
-
 	hash := m.hashFn(key)
 	index := hash % m.capacity
 
@@ -148,6 +140,35 @@ func (m *Map[K, V]) Delete(key K) {
 			return
 		}
 	}
+}
+
+func (m *Map[K, V]) Size() uint64 {
+	return m.size
+}
+
+func (m *Map[K, V]) Empty() bool {
+	return m.size == 0
+}
+
+func (m *Map[K, V]) Clear() {
+	m.items = make([]keyValue[K, V], initialCapacity)
+	m.capacity = initialCapacity
+	m.size = 0
+}
+
+func (m *Map[K, V]) EraseIf(predicate func(K, V) bool) {
+	for _, e := range m.items {
+		if e.filled && predicate(e.key, e.value) {
+			m.Delete(e.key)
+		}
+	}
+}
+
+func Contains[K comparable, V any](m *Map[K, V], key K) bool {
+	_, ok := m.Get(key)
+
+	return ok
+
 }
 
 func (m *Map[K, V]) Iterator() *Iterator[K, V] {
@@ -209,9 +230,6 @@ func HashUint(i uint) uint64 {
 }
 func HashString(s string) uint64 {
 	return fnv1a.HashString64(s)
-}
-func HashBytes(b []byte) uint64 {
-	return fnv1a.HashBytes64(b)
 }
 
 func hash(u uint64) uint64 {
