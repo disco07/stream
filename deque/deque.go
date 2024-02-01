@@ -1,37 +1,42 @@
-// Package deque provides a generic implementation of a double-ended queue (deque),
-// allowing for efficient insertion and removal of elements at both ends.
+// Package deque in Go provides an implementation of a generic double-ended queue (Deque),
+// inspired by the Deque data structure from the C++ standard library. It offers a versatile
+// and dynamic collection for storing and managing elements that can be efficiently added or
+// removed from both the front and the back.
 //
-// The Deque[T] structure, central to this package, is implemented using a dynamic array
-// to efficiently manage memory and optimize access times. The New function initializes
-// the Deque with an optional set of initial items:
+// The Deque[T any] type in this package is a generic implementation, allowing for the
+// storage of elements of any type, leveraging Go's generics introduced in Go 1.18. This
+// generic approach provides flexibility and strong type safety, accommodating a wide range
+// of applications.
 //
-//	func New[T any](items ...T) *Deque[T] {
-//	    capacity := len(items) * 2
-//	    if capacity < 4 {
-//	        capacity = 4
-//	    }
-//	    dq := &Deque[T]{
-//	        data: make([]T, capacity),
-//	        head: 0,
-//	        tail: len(items),
-//	        size: len(items),
-//	    }
-//	    copy(dq.data, items)
-//	    return dq
-//	}
+// Internally, the Deque is implemented using a dynamically resizing slice. It maintains
+// head and tail indices, along with a size counter for tracking the current number of
+// elements. The hasHead boolean flag helps in managing the state of the Deque, especially
+// when distinguishing between an empty Deque and a Deque with overlapping head and tail.
 //
-// The Deque supports operations like PushFront, PushBack, PopFront, and PopBack,
-// providing the flexibility to use it as a queue, a stack, or a hybrid structure.
+// Key Features:
+//   - New: Creates a new Deque with an optional initial set of elements, automatically
+//     adjusting the initial capacity based on the provided elements.
+//   - PushFront and PushBack: Add elements to the front or back of the Deque, respectively.
+//   - PopFront and PopBack: Remove and return elements from the front or back, respectively.
+//   - Additional utility methods for inspecting and managing the Deque.
 //
-// Example usage:
+// Example Usage:
 //
-//	dq := NewDeque[string]("a", "b", "c")
-//	dq.PushBack("d")
-//	dq.PushFront("e")
-//	fmt.Println(dq.PopFront()) // Outputs "e"
+//	// Creating a new Deque with initial elements
+//	dq := deque.New[int](1, 2, 3)
 //
-// This package is ideal for scenarios requiring dynamic and flexible queue-like
-// structures with efficient operations at both ends.
+//	// Adding elements to the front and back
+//	dq.PushFront(0)
+//	dq.PushBack(4)
+//
+//	// Removing elements from the front and back
+//	frontItem := dq.PopFront()  // frontItem is 0
+//	backItem := dq.PopBack()    // backItem is 4
+//
+// This example demonstrates the basic usage of the Deque, including initialization,
+// adding, and removing elements. The Deque's design and functionality are influenced
+// by its C++ counterpart but are adapted to fit Go's language features and type system,
+// offering a familiar yet idiomatic experience for Go developers.
 package deque
 
 import (
