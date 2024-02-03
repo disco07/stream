@@ -15,7 +15,7 @@ func BenchmarkMap(b *testing.B) {
 
 func BenchmarkUnorderedMap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		m := New[int, int](HashInt)
+		m := New[int, int](Hash[int])
 		for j := 0; j < 1000; j++ {
 			m.Set(j, j)
 		}

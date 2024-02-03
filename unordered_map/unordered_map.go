@@ -49,7 +49,9 @@ package unordered_map
 
 import (
 	"github.com/segmentio/fasthash/fnv1a"
+	"golang.org/x/exp/constraints"
 	"math/rand"
+	"reflect"
 )
 
 var initialCapacity = uint64(rand.Intn(1024))
@@ -198,38 +200,34 @@ func (m *Map[K, V]) resize() {
 	m.capacity = newCapacity
 }
 
-func HashUint64(u uint64) uint64 {
-	return hash(u)
+type Hashable interface {
+	constraints.Integer | constraints.Float | string
 }
-func HashUint32(u uint32) uint64 {
-	return hash(uint64(u))
+
+func Hash[T Hashable](t T) uint64 {
+	switch v := any(t).(type) {
+	case string:
+		return hashString(v)
+	}
+	return hash(toUint64(t))
 }
-func HashUint16(u uint16) uint64 {
-	return hash(uint64(u))
-}
-func HashUint8(u uint8) uint64 {
-	return hash(uint64(u))
-}
-func HashInt64(i int64) uint64 {
-	return hash(uint64(i))
-}
-func HashInt32(i int32) uint64 {
-	return hash(uint64(i))
-}
-func HashInt16(i int16) uint64 {
-	return hash(uint64(i))
-}
-func HashInt8(i int8) uint64 {
-	return hash(uint64(i))
-}
-func HashInt(i int) uint64 {
-	return hash(uint64(i))
-}
-func HashUint(i uint) uint64 {
-	return hash(uint64(i))
-}
-func HashString(s string) uint64 {
+
+func hashString(s string) uint64 {
 	return fnv1a.HashString64(s)
+}
+
+func toUint64(value interface{}) uint64 {
+	val := reflect.ValueOf(value)
+	switch val.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return uint64(val.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return val.Uint()
+	case reflect.Float32, reflect.Float64:
+		return uint64(val.Float())
+	default:
+		panic("unsupported type")
+	}
 }
 
 func hash(u uint64) uint64 {
